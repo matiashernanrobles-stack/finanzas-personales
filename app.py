@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import datetime
 import plotly.graph_objects as go
-import numpy as np
+import plotly.express as px
 
 #Prueba de app
 st.write("🟢 ¡La app está viva!")
@@ -69,20 +69,48 @@ else:
 
 st.info(f"💡 Caja chica diaria para extras: **${diaria_real:,.0f}** *(Compras fuertes de super ya cubiertas por ${gasto_super:,.0f})*")
 
-# 6. Gráfico de gastos por rubro con desglose y tooltips por Item, sin leyenda
+# 6. Gráfico de gastos por rubro con paletas de tonos por columna
 st.subheader("Gastos por Rubro")
 
 df_gastos = df_mes[df_mes['Condición'] == 'Gasto'].copy()
 df_gastos = df_gastos.sort_values(by=['Rubro', 'Importe'], ascending=[True, False])
 
-# Usamos color='Item' para que el tooltip muestre el ítem exacto al pasar el cursor
+# Definimos escalas secuenciales independientes para cada rubro
+paletas_rubro = {
+    'Depto': px.colors.sequential.Reds,
+    'Auto': px.colors.sequential.Blues,
+    'Comida': px.colors.sequential.Greens,
+    'Juan': px.colors.sequential.Tealgrn,
+    'Salud': px.colors.sequential.Oranges,
+    'Monotributo': px.colors.sequential.Purples,
+    'Creditos': px.colors.sequential.YlOrBr,
+    'Otros': px.colors.sequential.Greys,
+    'Servicios': px.colors.sequential.PuBu,
+    'Subscripción': px.colors.sequential.RdPu
+}
+
+# Asignamos un tono diferente de la misma gama a cada ítem dentro de su rubro
+color_map = {}
+for rubro, grupo in df_gastos.groupby('Rubro'):
+    items = grupo['Item'].unique()
+    n = len(items)
+    paleta = paletas_rubro.get(rubro, px.colors.sequential.Viridis)
+    for i, item in enumerate(items):
+        if n == 1:
+            idx = len(paleta) // 2
+        else:
+            idx = int(i * (len(paleta) - 1) / (n - 1))
+        color_map[item] = paleta[idx]
+
+# Creamos el gráfico con los colores mapeados por familia
 fig = px.bar(
     df_gastos, 
     x='Rubro', 
     y='Importe', 
     color='Item',
     barmode='stack',
-    text='Importe'
+    text='Importe',
+    color_discrete_map=color_map
 )
 
 # Textos dentro de cada segmento de la barra
@@ -115,7 +143,7 @@ fig.update_layout(
     uniformtext_minsize=8,
     uniformtext_mode='hide',
     margin=dict(t=60),
-    showlegend=False  # Elimina definitivamente el panel lateral de la derecha
+    showlegend=False
 )
 
 st.plotly_chart(fig, use_container_width=True)
