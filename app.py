@@ -169,7 +169,7 @@ meses_hist_seleccionados = st.multiselect(
 )
 
 if meses_hist_seleccionados:
-    df_evolucion = df[df['MesAnio'].dt.strftime('%Y-%m'].isin(meses_hist_seleccionados)].copy()
+    df_evolucion = df[df['MesAnio'].dt.strftime('%Y-%m').isin(meses_hist_seleccionados)].copy()
     df_evolucion['Mes_Str'] = df_evolucion['MesAnio'].dt.strftime('%Y-%m')
     df_resumen_hist = df_evolucion.groupby(['Mes_Str', 'Condición'], as_index=False)['Importe'].sum()
     
