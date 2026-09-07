@@ -269,6 +269,11 @@ if meses_hist_seleccionados:
 else:
     st.info("Seleccione al menos un mes para visualizar la evolución histórica.")
 
+El error ocurrió porque la función intentaba comparar los nombres de las columnas en lugar de verificar el número de fila.
+
+Aquí tienes el bloque corregido del punto 8 para aplicar la negrita a la última fila sin errores:
+
+Python
 # 8. Tabla de gastos fijos de Papi para el mes seleccionado
 st.subheader(f"Gastos del mes ({mes_seleccionado})")
 
@@ -290,12 +295,13 @@ if not df_papi.empty:
     df_total_row = pd.DataFrame({'Item': ['TOTAL'], 'Importe': [f"${total_papi:,.0f}"]})
     df_tabla_papi = pd.concat([df_tabla_papi, df_total_row], ignore_index=True)
     
-    # Función para poner en negrita toda la última fila (el TOTAL)
-    def resaltar_total(s):
-        is_total = s.index == len(df_tabla_papi) - 1
-        return ['font-weight: bold' if is_total else '' for _ in s]
+    # Función corregida: evalúa la propiedad .name (índice de la fila) de cada renglón
+    def resaltar_total(row):
+        if row.name == len(df_tabla_papi) - 1:
+            return ['font-weight: bold'] * len(row)
+        return [''] * len(row)
 
-    df_estilizado = df_tabla_papi.style.apply(resaltr_total if 'resaltr_total' in locals() else resaltar_total, axis=1)
+    df_estilizado = df_tabla_papi.style.apply(resaltar_total, axis=1)
 
     st.dataframe(df_estilizado, hide_index=True, use_container_width=True)
 else:
