@@ -272,10 +272,8 @@ else:
 # 8. Tabla de gastos fijos de Papi para el mes seleccionado
 st.subheader(f"Gastos del mes ({mes_seleccionado})")
 
-# Nos aseguramos de tratar la columna Fijo como numérica para filtrar bien el '1'
 df_mes['Fijo_num'] = pd.to_numeric(df_mes['Fijo'], errors='coerce')
 
-# Filtramos por Gasto, Fijo == 1 y que el detalle mencione a Papi
 df_papi = df_mes[
     (df_mes['Condición'] == 'Gasto') & 
     (df_mes['Fijo_num'] == 1) & 
@@ -292,6 +290,13 @@ if not df_papi.empty:
     df_total_row = pd.DataFrame({'Item': ['TOTAL'], 'Importe': [f"${total_papi:,.0f}"]})
     df_tabla_papi = pd.concat([df_tabla_papi, df_total_row], ignore_index=True)
     
-    st.dataframe(df_tabla_papi, hide_index=True, use_container_width=True)
+    # Función para poner en negrita toda la última fila (el TOTAL)
+    def resaltar_total(s):
+        is_total = s.index == len(df_tabla_papi) - 1
+        return ['font-weight: bold' if is_total else '' for _ in s]
+
+    df_estilizado = df_tabla_papi.style.apply(resaltr_total if 'resaltr_total' in locals() else resaltar_total, axis=1)
+
+    st.dataframe(df_estilizado, hide_index=True, use_container_width=True)
 else:
     st.info(f"No se registraron gastos fijos de Papi en el período {mes_seleccionado}.")
