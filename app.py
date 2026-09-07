@@ -67,9 +67,18 @@ else:
 
 st.info(f"💡 Caja chica diaria para extras: **${diaria_real:,.0f}** *(Compras fuertes de super ya cubiertas por ${gasto_super:,.0f})*")
 
-# 6. Gráfico simple de gastos por rubro
+# 6. Gráfico de gastos por rubro y desglose por item
 st.subheader("Gastos por Rubro")
-gastos_rubro = df_mes[df_mes['Condición'] == 'Gasto'].groupby('Rubro')['Importe'].sum().reset_index()
-fig = px.bar(gastos_rubro, x='Rubro', y='Importe', text='Importe')
-fig.update_traces(texttemplate='%{text:$.2s}', textposition='outside')
+
+df_gastos = df_mes[df_mes['Condición'] == 'Gasto']
+
+fig = px.bar(
+    df_gastos, 
+    x='Rubro', 
+    y='Importe', 
+    color='Item', 
+    text='Importe'
+)
+fig.update_traces(texttemplate='%{text:$.2s}', textposition='inside')
+fig.update_layout(barmode='stack')
 st.plotly_chart(fig, use_container_width=True)
