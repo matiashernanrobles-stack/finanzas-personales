@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import datetime
 import plotly.graph_objects as go
+import numpy as np
 
 #Prueba de app
 st.write("🟢 ¡La app está viva!")
@@ -68,33 +69,37 @@ else:
 
 st.info(f"💡 Caja chica diaria para extras: **${diaria_real:,.0f}** *(Compras fuertes de super ya cubiertas por ${gasto_super:,.0f})*")
 
-# 6. Gráfico de gastos por rubro, leyenda de rubros y totales limpios
+# 6. Gráfico de gastos por rubro con degradé por columna y totales limpios
 st.subheader("Gastos por Rubro")
 
 df_gastos = df_mes[df_mes['Condición'] == 'Gasto'].copy()
+
+# Ordenamos para que los montos mayores queden en la base y los menores arriba
 df_gastos = df_gastos.sort_values(by=['Rubro', 'Importe'], ascending=[True, False])
 
-# Usamos color='Rubro' para que la leyenda de la derecha muestre los rubros principales
+# Asignamos un identificador único por fila para que Plotly pinte cada segmento de forma independiente
+df_gastos['Item_Rubro'] = df_gastos['Item'] + " (" + df_gastos['Rubro'] + ")"
+
 fig = px.bar(
     df_gastos, 
     x='Rubro', 
     y='Importe', 
-    color='Rubro', # <--- Leyenda basada en Rubros
+    color='Item_Rubro',
     barmode='stack',
     text='Importe'
 )
 
-# Textos dentro de cada segmento (mostrando el ítem al pasar el mouse)
+# Textos dentro de cada segmento
 fig.update_traces(
     texttemplate='%{text:$.2s}', 
     textposition='inside',
     insidetextanchor='middle'
 )
 
-# Calculamos los totales reales por rubro
+# Calculamos los totales reales por rubro para la cúspide
 totales_rubro = df_gastos.groupby('Rubro', as_index=False)['Importe'].sum()
 
-# Añadimos los totales en la cúspide de cada barra de forma limpia
+# Añadimos los totales limpios arriba de cada barra
 fig.add_trace(
     go.Scatter(
         x=totales_rubro['Rubro'],
@@ -113,7 +118,8 @@ fig.update_layout(
     yaxis_title="Importe ($)",
     uniformtext_minsize=8,
     uniformtext_mode='hide',
-    margin=dict(t=60)
+    margin=dict(t=60),
+    showlegend=False # Ocultamos la leyenda lateral si prefieres que quede completamente limpio el gráfico
 )
 
 st.plotly_chart(fig, use_container_width=True)
