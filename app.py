@@ -273,7 +273,6 @@ El error ocurrió porque la función intentaba comparar los nombres de las colum
 
 Aquí tienes el bloque corregido del punto 8 para aplicar la negrita a la última fila sin errores:
 
-Python
 # 8. Tabla de gastos fijos de Papi para el mes seleccionado
 st.subheader(f"Gastos del mes ({mes_seleccionado})")
 
@@ -295,7 +294,6 @@ if not df_papi.empty:
     df_total_row = pd.DataFrame({'Item': ['TOTAL'], 'Importe': [f"${total_papi:,.0f}"]})
     df_tabla_papi = pd.concat([df_tabla_papi, df_total_row], ignore_index=True)
     
-    # Función corregida: evalúa la propiedad .name (índice de la fila) de cada renglón
     def resaltar_total(row):
         if row.name == len(df_tabla_papi) - 1:
             return ['font-weight: bold'] * len(row)
