@@ -5,6 +5,20 @@ import datetime
 import plotly.graph_objects as go
 import plotly.express as px
 
+# 0. Creamos una barra superior con dos columnas compactas: Estado y Botón
+col_estado, col_btn = st.columns([5, 1], vertical_alignment="center")
+
+with col_estado:
+    # Aquí va tu indicador actual de que la app está viva / conectada
+    st.markdown("🟢 **Estado:** App Activa y conectada")
+
+with col_btn:
+    # Botón pequeño para forzar la actualización
+    if st.button("🔄 Actualizar", help="Forzar recarga de datos desde Drive"):
+        st.cache_data.clear()  # Limpia la caché para obligar a leer de nuevo
+        st.rerun()             # Recarga la aplicación inmediatamente
+
+
 #Prueba de app
 st.write("🟢 ¡La app está viva!")
 
