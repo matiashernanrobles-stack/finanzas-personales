@@ -10,11 +10,15 @@ st.write("🟢 ¡La app está viva!")
 st.set_page_config(page_title="Mis Finanzas", layout="centered", initial_sidebar_state="collapsed")
 st.title("📊 Mi Tablero Financiero")
 
-# 2. Cargar los datos
-# Usamos cache para que no lea el Excel cada vez que tocas un botón
-@st.cache_data
+# 2. Cargar los datos desde Google Sheets
+# Usamos caché con tiempo de expiración (ttl) para que se actualice solo
+@st.cache_data(ttl=300)
 def cargar_datos():
-    df = pd.read_excel("Libro de cuentas personales.xlsx", sheet_name='Hoja1')
+    # Pega aquí el enlace de tu Google Sheet compartido como "Cualquier persona con el enlace -> Lector"
+    sheet_url = "https://docs.google.com/spreadsheets/d/TU_ID_DE_GOOGLE_SHEET/edit?usp=sharing"
+    csv_url = sheet_url.replace("/edit?usp=sharing", "/export?format=csv")
+    
+    df = pd.read_csv(csv_url)
     df['MesAnio'] = pd.to_datetime(df['MesAnio'])
     return df
 
