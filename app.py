@@ -69,13 +69,12 @@ else:
 
 st.info(f"💡 Caja chica diaria para extras: **${diaria_real:,.0f}** *(Compras fuertes de super ya cubiertas por ${gasto_super:,.0f})*")
 
-# 6. Gráfico de gastos por rubro con paletas de tonos por columna
+# 6. Gráfico de gastos por rubro con degradé invertido (más oscuro en la base)
 st.subheader("Gastos por Rubro")
 
 df_gastos = df_mes[df_mes['Condición'] == 'Gasto'].copy()
 df_gastos = df_gastos.sort_values(by=['Rubro', 'Importe'], ascending=[True, False])
 
-# Definimos escalas secuenciales independientes para cada rubro
 paletas_rubro = {
     'Depto': px.colors.sequential.Reds,
     'Auto': px.colors.sequential.Blues,
@@ -89,7 +88,6 @@ paletas_rubro = {
     'Subscripción': px.colors.sequential.RdPu
 }
 
-# Asignamos un tono diferente de la misma gama a cada ítem dentro de su rubro
 color_map = {}
 for rubro, grupo in df_gastos.groupby('Rubro'):
     items = grupo['Item'].unique()
@@ -99,10 +97,10 @@ for rubro, grupo in df_gastos.groupby('Rubro'):
         if n == 1:
             idx = len(paleta) // 2
         else:
-            idx = int(i * (len(paleta) - 1) / (n - 1))
+            # Invertimos el índice para que el primer elemento (base) tome el tono más oscuro y el último (punta) el más claro
+            idx = int((n - 1 - i) * (len(paleta) - 1) / (n - 1))
         color_map[item] = paleta[idx]
 
-# Creamos el gráfico con los colores mapeados por familia
 fig = px.bar(
     df_gastos, 
     x='Rubro', 
@@ -113,17 +111,14 @@ fig = px.bar(
     color_discrete_map=color_map
 )
 
-# Textos dentro de cada segmento de la barra
 fig.update_traces(
     texttemplate='%{text:$.2s}', 
     textposition='inside',
     insidetextanchor='middle'
 )
 
-# Calculamos los totales reales por rubro
 totales_rubro = df_gastos.groupby('Rubro', as_index=False)['Importe'].sum()
 
-# Añadimos los totales limpios justo arriba de cada columna
 fig.add_trace(
     go.Scatter(
         x=totales_rubro['Rubro'],
