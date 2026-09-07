@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import datetime
+import plotly.graph_objects as go
 
 #Prueba de app
 st.write("🟢 ¡La app está viva!")
@@ -67,15 +68,15 @@ else:
 
 st.info(f"💡 Caja chica diaria para extras: **${diaria_real:,.0f}** *(Compras fuertes de super ya cubiertas por ${gasto_super:,.0f})*")
 
-# 6. Gráfico de gastos por rubro, desglose por item y total controlado
+# 6. Gráfico de gastos por rubro, desglose por item y totales limpios
 st.subheader("Gastos por Rubro")
 
 df_gastos = df_mes[df_mes['Condición'] == 'Gasto'].copy()
 
-# Ordenamos para que los montos mayores queden en la base y los menores en la punta
+# Ordenamos para mantener consistencia visual en el apilado
 df_gastos = df_gastos.sort_values(by=['Rubro', 'Importe'], ascending=[True, False])
 
-# Gráfico principal apilado
+# 6.1. Creamos el gráfico de barras apiladas principal
 fig = px.bar(
     df_gastos, 
     x='Rubro', 
@@ -85,40 +86,37 @@ fig = px.bar(
     text='Importe'
 )
 
-# Mostramos los valores dentro de las porciones de la barra
+# Textos dentro de cada segmento de color
 fig.update_traces(
     texttemplate='%{text:$.2s}', 
     textposition='inside',
     insidetextanchor='middle'
 )
 
-# Calculamos los totales reales para fijar el techo del gráfico y que no vuele alto
+# 6.2. Calculamos los totales reales por rubro
 totales_rubro = df_gastos.groupby('Rubro', as_index=False)['Importe'].sum()
-max_y = totales_rubro['Importe'].max() * 1.2
 
-# Añadimos los totales justos arriba de cada barra
+# 6.3. Añadimos los totales en la cúspide usando coordenadas exactas (sin alterar el autoscale)
 fig.add_trace(
-    px.bar(
-        totales_rubro, 
-        x='Rubro', 
-        y='Importe', 
-        text='Importe'
-    ).update_traces(
-        texttemplate='%{text:$.2s}', 
-        textposition='outside', 
-        marker_opacity=0, 
-        showlegend=False
-    ).data[0]
+    go.Scatter(
+        x=totales_rubro['Rubro'],
+        y=totales_rubro['Importe'],
+        text=[f"${val:,.0f}" if val < 1000 else f"${val/1000:.0f}k" for val in totales_rubro['Importe']],
+        mode='text',
+        textposition='top center',
+        textfont=dict(size=11, color='white'),
+        showlegend=False,
+        hoverinfo='skip'
+    )
 )
 
-# Fijamos los límites del eje Y para evitar el achatamiento y el espacio vacío excesivo
+# Ajustes finales de diseño y margen superior para que los totales no se corten
 fig.update_layout(
-    barmode='stack',
-    yaxis=dict(range=[0, max_y]),
     xaxis_title="Rubro",
     yaxis_title="Importe ($)",
-    uniformtext_minsize=9,
-    uniformtext_mode='hide'
+    uniformtext_minsize=8,
+    uniformtext_mode='hide',
+    margin=dict(t=60)
 )
 
 st.plotly_chart(fig, use_container_width=True)
