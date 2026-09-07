@@ -15,7 +15,7 @@ st.title("📊 Mi Tablero Financiero")
 @st.cache_data(ttl=300)
 def cargar_datos():
     # Pega aquí el enlace de tu Google Sheet compartido como "Cualquier persona con el enlace -> Lector"
-    sheet_url = "https://docs.google.com/spreadsheets/d/TU_ID_DE_GOOGLE_SHEET/edit?usp=sharing"
+    sheet_url = "https://docs.google.com/spreadsheets/d/127OcNwAVYwsR6CZY-oIimSWT9mSpSjy6/edit?usp=sharing&ouid=117083243035701965898&rtpof=true&sd=true"
     csv_url = sheet_url.replace("/edit?usp=sharing", "/export?format=csv")
     
     df = pd.read_csv(csv_url)
