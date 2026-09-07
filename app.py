@@ -69,10 +69,16 @@ else:
 
 st.info(f"💡 Caja chica diaria para extras: **${diaria_real:,.0f}** *(Compras fuertes de super ya cubiertas por ${gasto_super:,.0f})*")
 
-# 6. Gráfico de gastos por rubro con degradé invertido (más oscuro en la base)
+# 6. Gráfico de gastos por rubro ordenado de mayor a menor gasto de izquierda a derecha
 st.subheader("Gastos por Rubro")
 
 df_gastos = df_mes[df_mes['Condición'] == 'Gasto'].copy()
+
+# Calculamos el total por rubro para ordenar los rubros de mayor a menor
+totales_rubro = df_gastos.groupby('Rubro', as_index=False)['Importe'].sum()
+totales_rubro = totales_rubro.sort_values(by='Importe', ascending=False)
+orden_rubros = totales_rubro['Rubro'].tolist()
+
 df_gastos = df_gastos.sort_values(by=['Rubro', 'Importe'], ascending=[True, False])
 
 paletas_rubro = {
@@ -97,7 +103,6 @@ for rubro, grupo in df_gastos.groupby('Rubro'):
         if n == 1:
             idx = len(paleta) // 2
         else:
-            # Invertimos el índice para que el primer elemento (base) tome el tono más oscuro y el último (punta) el más claro
             idx = int((n - 1 - i) * (len(paleta) - 1) / (n - 1))
         color_map[item] = paleta[idx]
 
@@ -108,7 +113,8 @@ fig = px.bar(
     color='Item',
     barmode='stack',
     text='Importe',
-    color_discrete_map=color_map
+    color_discrete_map=color_map,
+    category_orders={'Rubro': orden_rubros}
 )
 
 fig.update_traces(
@@ -116,8 +122,6 @@ fig.update_traces(
     textposition='inside',
     insidetextanchor='middle'
 )
-
-totales_rubro = df_gastos.groupby('Rubro', as_index=False)['Importe'].sum()
 
 fig.add_trace(
     go.Scatter(
@@ -142,44 +146,3 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
-
-# 7. Gráfico de ranking de gastos por rubro
-st.subheader("Ranking de Gastos por Rubro")
-
-df_ranking = df_mes[df_mes['Condición'] == 'Gasto'].groupby('Rubro', as_index=False)['Importe'].sum()
-df_ranking = df_ranking.sort_values(by='Importe', ascending=True) # Ascendente para que el mayor quede arriba en gráfico horizontal
-
-fig_ranking = px.bar(
-    df_ranking,
-    x='Importe',
-    y='Rubro',
-    orientation='h',
-    text='Importe',
-    color='Rubro',
-    color_discrete_map={
-        'Depto': '#8b0000',
-        'Auto': '#1f77b4',
-        'Comida': '#1e7b1e',
-        'Juan': '#45c4b0',
-        'Salud': '#d35400',
-        'Monotributo': '#8e44ad',
-        'Creditos': '#d4ac0d',
-        'Otros': '#7f8c8d',
-        'Servicios': '#2980b9',
-        'Subscripción': '#c0392b'
-    }
-)
-
-fig_ranking.update_traces(
-    texttemplate='%{text:$,.0f}',
-    textposition='auto'
-)
-
-fig_ranking.update_layout(
-    xaxis_title="Importe Total ($)",
-    yaxis_title="Rubro",
-    margin=dict(t=20),
-    showlegend=False
-)
-
-st.plotly_chart(fig_ranking, use_container_width=True)
