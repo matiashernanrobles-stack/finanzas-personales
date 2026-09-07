@@ -268,11 +268,7 @@ if meses_hist_seleccionados:
     st.plotly_chart(fig_evolucion, use_container_width=True)
 else:
     st.info("Seleccione al menos un mes para visualizar la evolución histórica.")
-
-El error ocurrió porque la función intentaba comparar los nombres de las columnas en lugar de verificar el número de fila.
-
-Aquí tienes el bloque corregido del punto 8 para aplicar la negrita a la última fila sin errores:
-
+    
 # 8. Tabla de gastos fijos de Papi para el mes seleccionado
 st.subheader(f"Gastos del mes ({mes_seleccionado})")
 
