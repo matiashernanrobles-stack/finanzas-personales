@@ -14,12 +14,20 @@ st.title("📊 Mi Tablero Financiero")
 # Usamos caché con tiempo de expiración (ttl) para que se actualice solo
 @st.cache_data(ttl=300)
 def cargar_datos():
-    # Pega aquí el enlace de tu Google Sheet compartido como "Cualquier persona con el enlace -> Lector"
     sheet_url = "https://docs.google.com/spreadsheets/d/127OcNwAVYwsR6CZY-oIimSWT9mSpSjy6/edit?usp=sharing&ouid=117083243035701965898&rtpof=true&sd=true"
     csv_url = sheet_url.replace("/edit?usp=sharing", "/export?format=csv")
     
     df = pd.read_csv(csv_url)
-    df['MesAnio'] = pd.to_datetime(df['MesAnio'])
+    
+    # Limpiamos la columna Importe por si Pandas la lee como texto
+    if 'Importe' in df.columns:
+        df['Importe'] = df['Importe'].astype(str).str.replace('$', '', regex=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False)
+        df['Importe'] = pd.to_numeric(df['Importe'], errors='coerce').fillna(0)
+        
+    # Convertimos la fecha correctamente
+    if 'MesAnio' in df.columns:
+        df['MesAnio'] = pd.to_datetime(df['MesAnio'], format='%d/%m/%Y', errors='coerce')
+        
     return df
 
 df = cargar_datos()
