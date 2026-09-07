@@ -18,10 +18,6 @@ with col_btn:
         st.cache_data.clear()  # Limpia la caché para obligar a leer de nuevo
         st.rerun()             # Recarga la aplicación inmediatamente
 
-
-#Prueba de app
-st.write("🟢 ¡La app está viva!")
-
 # 1. Configuración de la página (ideal para vista móvil)
 st.set_page_config(page_title="Mis Finanzas", layout="centered", initial_sidebar_state="collapsed")
 st.title("📊 Mi Tablero Financiero")
