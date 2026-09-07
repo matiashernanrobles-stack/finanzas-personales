@@ -276,8 +276,10 @@ Aquí tienes el bloque corregido del punto 8 para aplicar la negrita a la últim
 # 8. Tabla de gastos fijos de Papi para el mes seleccionado
 st.subheader(f"Gastos del mes ({mes_seleccionado})")
 
+# Nos aseguramos de tratar la columna Fijo como numérica para filtrar bien el '1'
 df_mes['Fijo_num'] = pd.to_numeric(df_mes['Fijo'], errors='coerce')
 
+# Filtramos por Gasto, Fijo == 1 y que el detalle mencione a Papi
 df_papi = df_mes[
     (df_mes['Condición'] == 'Gasto') & 
     (df_mes['Fijo_num'] == 1) & 
@@ -294,12 +296,9 @@ if not df_papi.empty:
     df_total_row = pd.DataFrame({'Item': ['TOTAL'], 'Importe': [f"${total_papi:,.0f}"]})
     df_tabla_papi = pd.concat([df_tabla_papi, df_total_row], ignore_index=True)
     
-    def resaltar_total(row):
-        if row.name == len(df_tabla_papi) - 1:
-            return ['font-weight: bold'] * len(row)
-        return [''] * len(row)
-
-    df_estilizado = df_tabla_papi.style.apply(resaltar_total, axis=1)
+    st.dataframe(df_tabla_papi, hide_index=True, use_container_width=True)
+else:
+    st.info(f"No se registraron gastos fijos de Papi en el período {mes_seleccionado}.")
 
     st.dataframe(df_estilizado, hide_index=True, use_container_width=True)
 else:
