@@ -67,24 +67,36 @@ else:
 
 st.info(f"💡 Caja chica diaria para extras: **${diaria_real:,.0f}** *(Compras fuertes de super ya cubiertas por ${gasto_super:,.0f})*")
 
-# 6. Gráfico de gastos por rubro, desglose por item y total arriba
+# 6. Gráfico de gastos por rubro, desglose por item y total controlado
 st.subheader("Gastos por Rubro")
 
-df_gastos = df_mes[df_mes['Condición'] == 'Gasto']
+df_gastos = df_mes[df_mes['Condición'] == 'Gasto'].copy()
 
-# Creamos el gráfico de barras apiladas por ítem
+# Ordenamos para que los montos mayores queden en la base y los menores en la punta
+df_gastos = df_gastos.sort_values(by=['Rubro', 'Importe'], ascending=[True, False])
+
+# Gráfico principal apilado
 fig = px.bar(
     df_gastos, 
     x='Rubro', 
     y='Importe', 
     color='Item',
-    barmode='stack'
+    barmode='stack',
+    text='Importe'
 )
 
-# Calculamos los totales por rubro para ponerlos en la cúspide de cada barra
-totales_rubro = df_gastos.groupby('Rubro')['Importe'].sum().reset_index()
+# Mostramos los valores dentro de las porciones de la barra
+fig.update_traces(
+    texttemplate='%{text:$.2s}', 
+    textposition='inside',
+    insidetextanchor='middle'
+)
 
-# Añadimos los números totales arriba de cada barra con una traza de texto transparente
+# Calculamos los totales reales para fijar el techo del gráfico y que no vuele alto
+totales_rubro = df_gastos.groupby('Rubro', as_index=False)['Importe'].sum()
+max_y = totales_rubro['Importe'].max() * 1.2
+
+# Añadimos los totales justos arriba de cada barra
 fig.add_trace(
     px.bar(
         totales_rubro, 
@@ -99,10 +111,13 @@ fig.add_trace(
     ).data[0]
 )
 
+# Fijamos los límites del eje Y para evitar el achatamiento y el espacio vacío excesivo
 fig.update_layout(
+    barmode='stack',
+    yaxis=dict(range=[0, max_y]),
     xaxis_title="Rubro",
     yaxis_title="Importe ($)",
-    uniformtext_minsize=8, 
+    uniformtext_minsize=9,
     uniformtext_mode='hide'
 )
 
