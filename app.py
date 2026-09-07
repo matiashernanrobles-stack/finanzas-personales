@@ -157,7 +157,7 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
-# 7. Evolución Histórica Reciente con Resumen y Diferencias Mensuales
+# 7. Evolución Histórica Reciente con Resumen Ajustado y Gráfico Espaciado
 st.subheader("Evolución Histórica Reciente")
 
 meses_todos = sorted(df['MesAnio'].dropna().dt.strftime('%Y-%m').unique(), reverse=True)
@@ -173,7 +173,6 @@ if meses_hist_seleccionados:
     df_evolucion['Mes_Str'] = df_evolucion['MesAnio'].dt.strftime('%Y-%m')
     df_resumen_hist = df_evolucion.groupby(['Mes_Str', 'Condición'], as_index=False)['Importe'].sum()
     
-    # Pivotamos para calcular diferencias y porcentajes mensuales con facilidad
     df_pivot = df_resumen_hist.pivot(index='Mes_Str', columns='Condición', values='Importe').reset_index()
     if 'Ingreso' not in df_pivot.columns: df_pivot['Ingreso'] = 0
     if 'Gasto' not in df_pivot.columns: df_pivot['Gasto'] = 0
@@ -182,22 +181,26 @@ if meses_hist_seleccionados:
     df_pivot['Porcentaje'] = (df_pivot['Diferencia'] / df_pivot['Ingreso']) * 100
     df_pivot['Porcentaje'] = df_pivot['Porcentaje'].fillna(0)
     
-    # Tarjetas de resumen total para el período seleccionado
     tot_ingresos = df_pivot['Ingreso'].sum()
     tot_gastos = df_pivot['Gasto'].sum()
     tot_dif = tot_ingresos - tot_gastos
     tot_porc = (tot_dif / tot_ingresos * 100) if tot_ingresos > 0 else 0
     
     st.markdown("##### 📌 Resumen acumulado del período seleccionado")
+    
+    # Tarjetas con HTML/Markdown para asegurar que los números grandes entren sin cortarse
     col_r1, col_r2, col_r3, col_r4 = st.columns(4)
-    col_r1.metric("Total Ingresos", f"${tot_ingresos:,.0f}")
-    col_r2.metric("Total Gastos", f"${tot_gastos:,.0f}")
-    col_r3.metric("Diferencia Total", f"${tot_dif:,.0f}")
-    col_r4.metric("Margen % Total", f"{tot_porc:.1f}%")
+    with col_r1:
+        st.markdown(f"<p style='margin:0; font-size:14px; color:gray;'>Total Ingresos</p><h3 style='margin:0; font-size:20px;'>${tot_ingresos:,.0f}</h3>", unsafe_allow_html=True)
+    with col_r2:
+        st.markdown(f"<p style='margin:0; font-size:14px; color:gray;'>Total Gastos</p><h3 style='margin:0; font-size:20px;'>${tot_gastos:,.0f}</h3>", unsafe_allow_html=True)
+    with col_r3:
+        st.markdown(f"<p style='margin:0; font-size:14px; color:gray;'>Diferencia Total</p><h3 style='margin:0; font-size:20px;'>${tot_dif:,.0f}</h3>", unsafe_allow_html=True)
+    with col_r4:
+        st.markdown(f"<p style='margin:0; font-size:14px; color:gray;'>Margen % Total</p><h3 style='margin:0; font-size:20px;'>{tot_porc:.1f}%</h3>", unsafe_allow_html=True)
     
     st.markdown("---")
 
-    # Función para formatear importes con decimales limpios
     def formatear_etiqueta(val):
         if val >= 1_000_000:
             return f"${val/1_000_000:.1f}M"
@@ -206,7 +209,6 @@ if meses_hist_seleccionados:
         else:
             return f"${val:,.0f}"
 
-    # Preparamos las trazas del gráfico de líneas clásico (Ingreso y Gasto)
     fig_evolucion = go.Figure()
 
     # Línea de Ingresos
@@ -233,10 +235,10 @@ if meses_hist_seleccionados:
         textfont=dict(size=10, color='#e74c3c')
     ))
 
-    # Texto central flotando exactamente entre el punto de gasto e ingreso (Diferencia y %)
+    # Texto central en dos renglones (Diferencia arriba, porcentaje abajo)
     df_pivot['Y_Mid'] = (df_pivot['Ingreso'] + df_pivot['Gasto']) / 2
     df_pivot['Texto_Dif'] = df_pivot.apply(
-        lambda r: f"Δ {formatear_etiqueta(r['Diferencia'])} ({r['Porcentaje']:.1f}%)", axis=1
+        lambda r: f"Δ {formatear_etiqueta(r['Diferencia'])}<br>({r['Porcentaje']:.1f}%)", axis=1
     )
 
     fig_evolucion.add_trace(go.Scatter(
@@ -245,14 +247,19 @@ if meses_hist_seleccionados:
         mode='text',
         name='Diferencia / Margen',
         text=df_pivot['Texto_Dif'],
-        textfont=dict(size=11, color='#f1c40f', family='sans-serif'),
+        textfont=dict(size=10, color='#f1c40f', family='sans-serif'),
         showlegend=False,
         hoverinfo='skip'
     ))
 
+    # Calculamos un rango con margen vertical extra para que los textos no se choquen
+    max_val = max(df_pivot['Ingreso'].max(), df_pivot['Gasto'].max()) * 1.15
+    min_val = min(df_pivot['Ingreso'].min(), df_pivot['Gasto'].min()) * 0.85
+
     fig_evolucion.update_layout(
         xaxis_title="Mes",
         yaxis_title="Importe ($)",
+        yaxis=dict(range=[min_val, max_val]), # Expande el eje Y verticalmente
         margin=dict(t=40, b=20),
         legend_title="Concepto",
         hovermode='x unified'
