@@ -142,3 +142,44 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
+# 7. Gráfico de ranking de gastos por rubro
+st.subheader("Ranking de Gastos por Rubro")
+
+df_ranking = df_mes[df_mes['Condición'] == 'Gasto'].groupby('Rubro', as_index=False)['Importe'].sum()
+df_ranking = df_ranking.sort_values(by='Importe', ascending=True) # Ascendente para que el mayor quede arriba en gráfico horizontal
+
+fig_ranking = px.bar(
+    df_ranking,
+    x='Importe',
+    y='Rubro',
+    orientation='h',
+    text='Importe',
+    color='Rubro',
+    color_discrete_map={
+        'Depto': '#8b0000',
+        'Auto': '#1f77b4',
+        'Comida': '#1e7b1e',
+        'Juan': '#45c4b0',
+        'Salud': '#d35400',
+        'Monotributo': '#8e44ad',
+        'Creditos': '#d4ac0d',
+        'Otros': '#7f8c8d',
+        'Servicios': '#2980b9',
+        'Subscripción': '#c0392b'
+    }
+)
+
+fig_ranking.update_traces(
+    texttemplate='%{text:$,.0f}',
+    textposition='auto'
+)
+
+fig_ranking.update_layout(
+    xaxis_title="Importe Total ($)",
+    yaxis_title="Rubro",
+    margin=dict(t=20),
+    showlegend=False
+)
+
+st.plotly_chart(fig_ranking, use_container_width=True)
