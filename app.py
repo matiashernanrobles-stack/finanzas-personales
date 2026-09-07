@@ -268,3 +268,26 @@ if meses_hist_seleccionados:
     st.plotly_chart(fig_evolucion, use_container_width=True)
 else:
     st.info("Seleccione al menos un mes para visualizar la evolución histórica.")
+
+# 8. Tabla de gastos de Papi para el mes seleccionado
+st.subheader(f"Gastos del mes ({mes_seleccionado})")
+
+# Filtramos por el mes seleccionado y el rubro correspondiente a Papi / Fijo 1
+df_papi = df_mes[(df_mes['Condición'] == 'Gasto') & (df_mes['Rubro'].str.contains('Papi|Fijo 1', case=False, na=False))].copy()
+
+if not df_papi.empty:
+    df_tabla_papi = df_papi[['Item', 'Importe']].copy()
+    
+    # Calculamos la sumatoria total
+    total_papi = df_tabla_papi['Importe'].sum()
+    
+    # Formateamos los valores como moneda
+    df_tabla_papi['Importe'] = df_tabla_papi['Importe'].apply(lambda x: f"${x:,.0f}")
+    
+    # Agregamos la fila de total al final
+    df_total_row = pd.DataFrame({'Item': ['TOTAL'], 'Importe': [f"${total_papi:,.0f}"]})
+    df_tabla_papi = pd.concat([df_tabla_papi, df_total_row], ignore_index=True)
+    
+    st.dataframe(df_tabla_papi, hide_index=True, use_container_width=True)
+else:
+    st.info(f"No se registraron gastos para Papi en el período {mes_seleccionado}.")
