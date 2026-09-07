@@ -156,3 +156,53 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
+# 7. Evolución Histórica de Ingresos vs Gastos (Filtrada por selección de meses)
+st.subheader("Evolución Histórica Reciente")
+
+# Selector múltiple para que elija exactamente qué meses desea contrastar
+meses_todos = sorted(df['MesAnio'].dropna().dt.strftime('%Y-%m').unique(), reverse=True)
+# Por defecto seleccionamos los últimos 6 meses para evitar arrastrar datos viejos
+meses_hist_seleccionados = st.multiselect(
+    "Seleccionar meses a incluir en la evolución:",
+    options=meses_todos,
+    default=meses_todos[:6] if len(meses_todos) >= 6 else meses_todos
+)
+
+if meses_hist_seleccionados:
+    # Filtramos el DataFrame general para los meses elegidos
+    df_evolucion = df[df['MesAnio'].dt.strftime('%Y-%m').isin(meses_hist_seleccionados)].copy()
+    
+    # Agrupamos por mes y condición (Ingreso vs Gasto)
+    df_evolucion['Mes_Str'] = df_evolucion['MesAnio'].dt.strftime('%Y-%m')
+    df_resumen_hist = df_evolucion.groupby(['Mes_Str', 'Condición'], as_index=False)['Importe'].sum()
+    
+    # Ordenamos cronológicamente para el gráfico de líneas
+    df_resumen_hist = df_resumen_hist.sort_values('Mes_Str')
+
+    # Creamos el gráfico de líneas temporal
+    fig_evolucion = px.line(
+        df_resumen_hist,
+        x='Mes_Str',
+        y='Importe',
+        color='Condición',
+        markers=True,
+        text='Importe',
+        color_discrete_map={'Ingreso': '#2ecc71', 'Gasto': '#e74c3c'}
+    )
+
+    fig_evolucion.update_traces(
+        texttemplate='$%{text:,.0s}',
+        textposition='top center'
+    )
+
+    fig_evolucion.update_layout(
+        xaxis_title="Mes",
+        yaxis_title="Importe ($)",
+        margin=dict(t=40),
+        legend_title="Concepto"
+    )
+
+    st.plotly_chart(fig_evolucion, use_container_width=True)
+else:
+    st.info("Seleccione al menos un mes para visualizar la evolución histórica.")
