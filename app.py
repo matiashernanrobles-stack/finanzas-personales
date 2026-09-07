@@ -157,43 +157,48 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
-# 7. Evolución Histórica de Ingresos vs Gastos (Filtrada por selección de meses)
+# 7. Evolución Histórica Reciente (Últimos 12 meses por defecto y etiquetas con decimales)
 st.subheader("Evolución Histórica Reciente")
 
-# Selector múltiple para que elija exactamente qué meses desea contrastar
 meses_todos = sorted(df['MesAnio'].dropna().dt.strftime('%Y-%m').unique(), reverse=True)
-# Por defecto seleccionamos los últimos 6 meses para evitar arrastrar datos viejos
+
+# Seleccionamos por defecto los últimos 12 meses para el análisis interanual
 meses_hist_seleccionados = st.multiselect(
     "Seleccionar meses a incluir en la evolución:",
     options=meses_todos,
-    default=meses_todos[:6] if len(meses_todos) >= 6 else meses_todos
+    default=meses_todos[:12] if len(meses_todos) >= 12 else meses_todos
 )
 
 if meses_hist_seleccionados:
-    # Filtramos el DataFrame general para los meses elegidos
     df_evolucion = df[df['MesAnio'].dt.strftime('%Y-%m').isin(meses_hist_seleccionados)].copy()
-    
-    # Agrupamos por mes y condición (Ingreso vs Gasto)
     df_evolucion['Mes_Str'] = df_evolucion['MesAnio'].dt.strftime('%Y-%m')
     df_resumen_hist = df_evolucion.groupby(['Mes_Str', 'Condición'], as_index=False)['Importe'].sum()
-    
-    # Ordenamos cronológicamente para el gráfico de líneas
     df_resumen_hist = df_resumen_hist.sort_values('Mes_Str')
 
-    # Creamos el gráfico de líneas temporal
+    # Función para formatear el texto con un decimal (ej: $2.8M) en lugar de redondear a enteros
+    def formatear_etiqueta(val):
+        if val >= 1_000_000:
+            return f"${val/1_000_000:.1f}M"
+        elif val >= 1_000:
+            return f"${val/1_000:.0f}k"
+        else:
+            return f"${val:,.0f}"
+
+    df_resumen_hist['Texto_Etiqueta'] = df_resumen_hist['Importe'].apply(formatear_etiqueta)
+
     fig_evolucion = px.line(
         df_resumen_hist,
         x='Mes_Str',
         y='Importe',
         color='Condición',
         markers=True,
-        text='Importe',
+        text='Texto_Etiqueta',
         color_discrete_map={'Ingreso': '#2ecc71', 'Gasto': '#e74c3c'}
     )
 
     fig_evolucion.update_traces(
-        texttemplate='$%{text:,.0s}',
-        textposition='top center'
+        textposition='top center',
+        textfont=dict(size=10)
     )
 
     fig_evolucion.update_layout(
