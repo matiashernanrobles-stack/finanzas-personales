@@ -69,25 +69,23 @@ else:
 
 st.info(f"💡 Caja chica diaria para extras: **${diaria_real:,.0f}** *(Compras fuertes de super ya cubiertas por ${gasto_super:,.0f})*")
 
-# 6. Gráfico de gastos por rubro con leyenda lateral y totales limpios
+# 6. Gráfico de gastos por rubro con desglose y tooltips por Item, sin leyenda
 st.subheader("Gastos por Rubro")
 
 df_gastos = df_mes[df_mes['Condición'] == 'Gasto'].copy()
-
-# Ordenamos para que los ítems mayores queden en la base y los menores arriba
 df_gastos = df_gastos.sort_values(by=['Rubro', 'Importe'], ascending=[True, False])
 
-# Usamos color='Rubro' para que la leyenda de la derecha muestre los rubros principales
+# Usamos color='Item' para que el tooltip muestre el ítem exacto al pasar el cursor
 fig = px.bar(
     df_gastos, 
     x='Rubro', 
     y='Importe', 
-    color='Rubro',
+    color='Item',
     barmode='stack',
     text='Importe'
 )
 
-# Textos dentro de cada segmento (mostrando el ítem al pasar el mouse)
+# Textos dentro de cada segmento de la barra
 fig.update_traces(
     texttemplate='%{text:$.2s}', 
     textposition='inside',
@@ -97,7 +95,7 @@ fig.update_traces(
 # Calculamos los totales reales por rubro
 totales_rubro = df_gastos.groupby('Rubro', as_index=False)['Importe'].sum()
 
-# Añadimos los totales en la cúspide de cada barra con coordenadas exactas
+# Añadimos los totales limpios justo arriba de cada columna
 fig.add_trace(
     go.Scatter(
         x=totales_rubro['Rubro'],
@@ -117,7 +115,7 @@ fig.update_layout(
     uniformtext_minsize=8,
     uniformtext_mode='hide',
     margin=dict(t=60),
-    showlegend=True
+    showlegend=False  # Elimina definitivamente el panel lateral de la derecha
 )
 
 st.plotly_chart(fig, use_container_width=True)
